@@ -15,7 +15,7 @@ platforms:
   - twitter
 
 feeds:
-  - https://hnrss.org/frontpage
   - https://techcrunch.com/feed/
   - https://feeds.arstechnica.com/arstechnica/technology-lab
   - https://www.theverge.com/rss/index.xml
+  - https://venturebeat.com/category/ai/feed/

@@ -145,3 +145,44 @@ def finish_run(run_id: str, status: str, articles_found: int = 0,
             "drafts_created = %s, error = %s WHERE id = %s",
             (status, articles_found, drafts_created, error, run_id),
         )
+
+
+def get_articles(status: str, limit: int = 20) -> list[dict]:
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT id, title, url, content FROM articles WHERE status = %s "
+            "ORDER BY created_at LIMIT %s", (status, limit)
+        ).fetchall()
+
+
+def drafts_for_article(article_id: str, status: str | None = None) -> list[dict]:
+    with get_conn() as conn:
+        if status:
+            return conn.execute(
+                "SELECT * FROM drafts WHERE article_id = %s AND status = %s ORDER BY platform",
+                (article_id, status)).fetchall()
+        return conn.execute(
+            "SELECT * FROM drafts WHERE article_id = %s ORDER BY platform", (article_id,)).fetchall()
+
+
+def articles_ready_to_publish() -> list[str]:
+    """Articles whose drafts are all decided (approved or rejected) by a human."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT a.id FROM articles a WHERE a.status = 'drafted' "
+            "AND EXISTS (SELECT 1 FROM drafts d WHERE d.article_id = a.id) "
+            "AND NOT EXISTS (SELECT 1 FROM drafts d WHERE d.article_id = a.id "
+            "                AND d.status IN ('pending', 'edited'))"
+        ).fetchall()
+    return [str(r["id"]) for r in rows]
+
+
+def record_post(draft_id: str, platform: str, post_ref: str, status: str = "dry_run") -> bool:
+    """Save a post record. Returns False if this draft was already posted."""
+    with get_conn() as conn:
+        row = conn.execute(
+            "INSERT INTO posts (draft_id, platform, post_ref, status) VALUES (%s, %s, %s, %s) "
+            "ON CONFLICT (draft_id, platform) DO NOTHING RETURNING id",
+            (draft_id, platform, post_ref, status),
+        ).fetchone()
+    return row is not None
