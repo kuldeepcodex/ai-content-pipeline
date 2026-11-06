@@ -57,13 +57,14 @@ def health() -> dict:
 @app.get("/api/drafts", dependencies=[Depends(require_auth)])
 def list_drafts(status: str = "review") -> list[dict]:
     statuses = REVIEW if status == "review" else (status,)
-    if status not in ("review", "approved", "rejected", "posted"):
-        raise HTTPException(422, "status must be review, approved, rejected or posted")
+    if status not in ("review", "approved", "rejected", "posted", "failed"):
+        raise HTTPException(422, "status must be review, approved, rejected, posted or failed")
     with conn() as c:
         return c.execute(
             "SELECT d.id, d.platform, d.text, d.hashtags, d.critic_score, d.rewrites, d.status, "
-            "d.created_at, a.title AS article_title, a.url AS article_url "
+            "d.created_at, a.title AS article_title, a.url AS article_url, p.post_ref "
             "FROM drafts d JOIN articles a ON a.id = d.article_id "
+            "LEFT JOIN posts p ON p.draft_id = d.id AND p.platform = d.platform "
             "WHERE d.status = ANY(%s) ORDER BY d.created_at DESC, d.platform",
             (list(statuses),),
         ).fetchall()

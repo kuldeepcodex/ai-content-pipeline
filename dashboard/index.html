@@ -52,7 +52,7 @@
   <div id="list"></div>
 </div>
 <script>
-const TABS = [["review","Needs review"],["approved","Approved"],["rejected","Rejected"],["posted","Posted"]];
+const TABS = [["review","Needs review"],["approved","Approved"],["rejected","Rejected"],["posted","Posted"],["failed","Failed"]];
 const TWITTER_MAX = 240;
 let token = "", view = "review";
 try { token = sessionStorage.getItem("token") || ""; } catch (e) {}
@@ -106,12 +106,14 @@ function card(d) {
   const readOnly = !(d.status === "pending" || d.status === "edited");
   const body = el("div", { class: "text", text: d.text });
   const tags = el("div", { class: "tags", text: d.hashtags.map((t) => "#" + t).join(" ") });
+  const note = d.post_ref ? el("div", { class: "muted", text: (d.status === "failed" ? "Error: " : "Post: ") + d.post_ref }) : null;
   const root = el("div", { class: "card", "data-id": d.id },
     el("div", { class: "meta" },
       el("span", { class: "badge", text: d.platform }),
       el("span", { class: "badge", text: "score " + (d.critic_score ?? "-") }),
       el("span", { class: "badge", text: d.status })),
     body, tags);
+  if (note) root.append(note);
   if (readOnly) return root;
 
   const actions = el("div", { class: "actions" });

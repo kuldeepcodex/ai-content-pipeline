@@ -130,8 +130,14 @@ def human_review(state: PipelineState) -> dict:
 
 def publish(state: PipelineState) -> dict:
     approved = db.drafts_for_article(state["article_id"], "approved")
+    failed = 0
     for draft in approved:
-        publisher.publish_draft(draft)
-        db.set_draft_status(str(draft["id"]), "posted")
-    db.update_article(state["article_id"], status="done" if approved else "closed")
+        result = publisher.publish_draft(draft, state.get("url"))
+        if result["status"] == "failed":
+            db.set_draft_status(str(draft["id"]), "failed")
+            failed += 1
+        elif result["status"] in ("posted", "dry_run"):
+            db.set_draft_status(str(draft["id"]), "posted")
+    db.update_article(state["article_id"],
+                      status="closed" if not approved else ("partial" if failed else "done"))
     return {}

@@ -186,3 +186,23 @@ def record_post(draft_id: str, platform: str, post_ref: str, status: str = "dry_
             (draft_id, platform, post_ref, status),
         ).fetchone()
     return row is not None
+
+
+def claim_post(draft_id: str, platform: str) -> bool:
+    """Reserve the right to post this draft BEFORE calling the platform.
+    Returns False if a post record already exists, so a retry can never double post."""
+    with get_conn() as conn:
+        row = conn.execute(
+            "INSERT INTO posts (draft_id, platform, status) VALUES (%s, %s, 'sending') "
+            "ON CONFLICT (draft_id, platform) DO NOTHING RETURNING id",
+            (draft_id, platform),
+        ).fetchone()
+    return row is not None
+
+
+def finish_post(draft_id: str, platform: str, status: str, post_ref: str | None) -> None:
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE posts SET status = %s, post_ref = %s WHERE draft_id = %s AND platform = %s",
+            (status, post_ref, draft_id, platform),
+        )

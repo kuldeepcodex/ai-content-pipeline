@@ -16,9 +16,9 @@ next scheduled run -> resumes the paused article -> records the approved posts
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env            # then fill in the values (see below)
-python -m scripts.check_setup   # expect three OK lines
-python -m scripts.setup_db      # creates the tables
+cp .env.example .env
+python -m scripts.check_setup
+python -m scripts.setup_db
 python -m scripts.run_pipeline --limit 2
 ```
 
@@ -36,7 +36,7 @@ Open the dashboard locally:
 
 ```bash
 export $(grep -v '^#' .env | xargs)
-uvicorn dashboard.app:app --reload     # http://localhost:8000
+uvicorn dashboard.app:app --reload
 ```
 
 Approve some drafts, then run `python -m scripts.run_pipeline --resume-only` to record them.
@@ -83,8 +83,8 @@ The Hobby plan is free for personal, non-commercial use, which covers a college 
 ## 6. Tests
 
 ```bash
-pytest tests/test_scraper.py tests/test_alerts.py        # no database needed
-TEST_DATABASE_URL=<a separate empty Neon database> pytest   # also runs the graph tests
+pytest tests/test_scraper.py tests/test_alerts.py
+TEST_DATABASE_URL=<a separate empty Neon database> pytest
 ```
 Never point `TEST_DATABASE_URL` at your real database.
 
@@ -99,6 +99,36 @@ Never point `TEST_DATABASE_URL` at your real database.
 | `src/publisher.py` | dry-run publisher (swap in real APIs later) |
 | `scripts/run_pipeline.py` | the command Actions runs |
 | `dashboard/` | approval page and API (deployed on Vercel) |
+
+## 7. Real posting to LinkedIn and X
+
+Posting is **off by default** (dry run). It turns on only when `POST_LIVE=true`. Instagram always stays a dry run.
+A post is reserved in the database before it is sent, so a retry can never post the same draft twice.
+If a post fails, the draft moves to the **Failed** tab with the reason, and you get an alert.
+
+### LinkedIn (free)
+1. Go to linkedin.com/developers/apps and click **Create app**. LinkedIn asks for a Company Page. Create a simple one if you have none.
+2. On the app's **Products** tab, request **Share on LinkedIn** and **Sign In with LinkedIn using OpenID Connect**.
+3. On the **Auth** tab, add the redirect URL `http://localhost:8080/callback`, then copy the Client ID and Client Secret into `.env` as `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`.
+4. Run `python -m scripts.get_linkedin_token`, sign in in the browser, and add the printed `LINKEDIN_ACCESS_TOKEN=...` line to `.env`.
+5. Test: `python -m scripts.test_post linkedin --yes` makes one real public test post.
+
+Posts go through LinkedIn's Posts API (`/rest/posts`). It needs a version header (`YYYYMM`). The code uses `202610`; LinkedIn retires old versions, so if posts fail with a version error, set `LINKEDIN_API_VERSION` to a newer month.
+
+The token lasts about 60 days. When it expires you get an alert saying so. Run step 4 again and update the GitHub secret.
+
+### X (paid credits)
+1. Go to console.x.com, sign in, and create an app.
+2. In the app's settings, set permissions to **Read and write** FIRST. Then generate the API Key and Secret and the Access Token and Secret. Tokens keep the permissions they had when they were made.
+3. Open Billing and buy a small credit pack. Check the price X shows you. One source lists about $0.015 per post, and about $0.20 for a post with a link, so tweets here never include a link.
+4. Put the four values in `.env` as `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`.
+5. Test: `python -m scripts.test_post x --yes`.
+
+### Turn it on
+Set `POST_LIVE=true` in `.env`. To post only to LinkedIn for now, also set `POST_LIVE_PLATFORMS=linkedin`; X drafts then stay dry runs.
+Then then approve a draft in the dashboard and run `python -m scripts.run_pipeline --resume-only`.
+For the GitHub schedule, add the same names as repository secrets (`POST_LIVE`, `LINKEDIN_ACCESS_TOKEN`, `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`).
+To stop real posting at any time, delete the `POST_LIVE` secret or set it to `false`.
 
 ## If something breaks
 
