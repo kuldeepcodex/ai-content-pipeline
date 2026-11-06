@@ -1,0 +1,21 @@
+# All tunable values live here. Change a model name here, not in the code.
+models:
+  main: gemini-3.1-flash-lite     # research, review, drafts (largest free quota)
+  backup: openai/gpt-oss-120b     # Groq, used when Gemini fails or is rate limited
+
+limits:
+  max_articles_per_run: 5         # keeps a run inside the free daily quota
+  relevance_min: 6                # research score (1-10) needed to continue
+  critic_min: 7                   # critic score (1-10) needed to pass
+  max_rewrites: 2                 # rewrite loops per draft
+
+platforms:
+  - linkedin
+  - instagram
+  - twitter
+
+feeds:
+  - https://hnrss.org/frontpage
+  - https://techcrunch.com/feed/
+  - https://feeds.arstechnica.com/arstechnica/technology-lab
+  - https://www.theverge.com/rss/index.xml
