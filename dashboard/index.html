@@ -93,7 +93,11 @@ function drawTabs() {
 async function loadStats() {
   try {
     const s = await api("/api/stats");
-    const run = s.last_run ? `Last run: ${s.last_run.status}, ${s.last_run.drafts_created} drafts` : "No runs yet";
+    let run = "No runs yet";
+    if (s.last_run) {
+      const hours = Math.round((Date.now() - new Date(s.last_run.started_at).getTime()) / 36e5);
+      run = `Last run ${hours}h ago: ${s.last_run.status}, ${s.last_run.drafts_created} drafts` + (hours > 12 ? " (the schedule may have stopped)" : "");
+    }
     $("#stats").textContent = `${s.needs_review} waiting for review. ${run}.`;
   } catch (e) { $("#stats").textContent = ""; }
 }

@@ -1,1 +1,35 @@
-# TODO: filled in stage 4
+name: pipeline
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"      # every 6 hours at minute 17, UTC (odd minute avoids the busy start of the hour)
+  workflow_dispatch:             # lets you press "Run workflow" by hand
+    inputs:
+      limit:
+        description: "Max new articles"
+        default: "5"
+
+concurrency:
+  group: pipeline                # never run two at once
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run pipeline
+        run: python -m scripts.run_pipeline --limit "${LIMIT:-5}"
+        env:
+          LIMIT: ${{ github.event.inputs.limit }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

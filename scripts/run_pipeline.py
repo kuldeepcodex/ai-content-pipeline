@@ -10,7 +10,7 @@ import logging
 from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.types import Command
 
-from src import db
+from src import alerts, db
 from src.config import database_url, require_env
 from src.graph.pipeline import build_graph
 from src.scraper import fetch_new_articles
@@ -58,12 +58,15 @@ def run(limit: int | None = None, resume_only: bool = False) -> None:
                     log.exception("publish failed")
     except Exception as exc:
         db.finish_run(run_id, "failed", found, drafts, str(exc))
+        alerts.notify(f"Run crashed: {type(exc).__name__}: {str(exc)[:300]}")
         raise
     db.finish_run(run_id, "failed" if errors else "ok", found, drafts, "; ".join(errors) or None)
     print(f"Run finished. Articles processed: {found}. Drafts created: {drafts}. "
           f"Errors: {len(errors)}")
     for e in errors:
         print("  -", e)
+    if errors:
+        alerts.notify(f"Run finished with {len(errors)} error(s). First: {errors[0][:300]}")
 
 
 if __name__ == "__main__":
