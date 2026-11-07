@@ -3,8 +3,20 @@
 TWITTER_MAX = 240   # characters, text plus hashtags
 
 RULES = {
-    "linkedin": "Professional tone. 90 to 150 words. Start with a hook line. "
-                "End with a question. 3 to 5 hashtags.",
+    "linkedin": (
+        "Write for software developers, CS students and tech-curious professionals. "
+        "90 to 150 words, hard limit 150. Use this structure with a blank line between parts:\n"
+        "1. Hook: one line under 15 words that names the news or a surprising fact. "
+        "Do not copy the headline and do not start with 'Big news' or 'Excited to share'.\n"
+        "2. What happened: 2 or 3 short sentences using only facts from the summary.\n"
+        "3. Why it matters: 1 or 2 sentences on what this means for developers, students "
+        "or the tech industry. Present it as your view ('this suggests', 'worth watching'), "
+        "never as a new fact.\n"
+        "4. Question: one specific question that invites developers to share experience, "
+        "not a generic 'What do you think?'.\n"
+        "Keep each paragraph to 1 to 3 lines. No emojis in the text. "
+        "Use 3 to 4 relevant hashtags, mixing one broad tag and specific ones."
+    ),
     "instagram": "Friendly, energetic tone. Under 120 words. A few emojis are fine. "
                  "6 to 10 hashtags.",
     "twitter": f"Short and punchy. Text plus hashtags must be {TWITTER_MAX} characters or fewer. "
