@@ -33,7 +33,7 @@ def live_enabled() -> bool:
 
 def live_platforms() -> set[str]:
     """Platforms that really post. Set POST_LIVE_PLATFORMS=linkedin to post only there."""
-    raw = os.getenv("POST_LIVE_PLATFORMS", "linkedin,twitter")
+    raw = os.getenv("POST_LIVE_PLATFORMS") or "linkedin,twitter"
     return {p.strip().lower() for p in raw.split(",") if p.strip()} & {"linkedin", "twitter"}
 
 
@@ -84,7 +84,7 @@ def post_linkedin(text: str) -> str:
     """Posts with LinkedIn's Posts API (POST /rest/posts). `text` must already be escaped."""
     _need("LINKEDIN_ACCESS_TOKEN")
     token = os.environ["LINKEDIN_ACCESS_TOKEN"]
-    version = os.getenv("LINKEDIN_API_VERSION", LINKEDIN_VERSION)
+    version = os.getenv("LINKEDIN_API_VERSION") or LINKEDIN_VERSION
     headers = {"Authorization": f"Bearer {token}", "X-Restli-Protocol-Version": "2.0.0",
                "Linkedin-Version": version, "Content-Type": "application/json"}
     try:
