@@ -1,7 +1,7 @@
 # All tunable values live here. Change a model name here, not in the code.
 models:
   main: gemini-3.1-flash-lite     # research, review, drafts (largest free quota)
-  backup: openai/gpt-oss-120b     # Groq, used when Gemini fails or is rate limited
+  backup: openai/gpt-oss-120b
 
 limits:
   max_articles_per_run: 5         # keeps a run inside the free daily quota

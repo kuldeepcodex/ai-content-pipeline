@@ -22,8 +22,9 @@ def structured(schema: type):
     from langchain_groq import ChatGroq
 
     models = get_settings()["models"]
-    primary = ChatGoogleGenerativeAI(model=models["main"], temperature=0.4, max_retries=2)
-    backup = ChatGroq(model=models["backup"], temperature=0.4, max_retries=2)
-    return primary.with_structured_output(schema).with_fallbacks(
-        [backup.with_structured_output(schema)]
-    )
+    primary = ChatGoogleGenerativeAI(model=models["main"], temperature=0.4, max_retries=2, timeout=60)
+    backup = ChatGroq(model=models["backup"], temperature=0.4, max_retries=2, timeout=60)
+    return primary.with_structured_output(schema).with_fallbacks([
+        backup.with_structured_output(schema, method="json_schema"),
+        backup.with_structured_output(schema, method="function_calling"),
+    ])
